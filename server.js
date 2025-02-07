@@ -196,6 +196,40 @@ app.post('/api/pigs', async function(req,res)
 });
 
 
+app.post('/api/vaccination', async function(req,res)
+{
+    try {
+        const { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate } = req.body;
+        logger.info("Calculating Merkle");
+
+        const saltedHashes = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate ].map(hashWithSalt);
+        const salts = saltedHashes.map(hash => hash.salt);
+        const leaves = saltedHashes.map(hash => hash.hash);
+
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        const merkleroot = "0x" + tree.getRoot().toString("hex");
+
+        const ipfsData = { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate };
+        const ipfs_cid = await uploadToIPFS(ipfsData);
+        logger.info("Data added to IPFS");
+
+        
+        const receipt = await sendBlockchainTransaction(contract.methods.addVaccination,[pigId, merkleroot, ipfs_cid]);
+        logger.info(`Transaction successful with hash: ${receipt.transactionHash}`);
+
+        const insertQuery = `INSERT INTO vaccination_logs (vaccination_id, pig_id, vaccine_name, batch_number, administered_by, admin_date, next_due_date, salt1, salt2, salt3, salt4, salt5, salt6, salt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
+        const insertValues = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate , ...salts];
+        await pool.query(insertQuery, insertValues);
+
+        res.send("Data added");
+        logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
+    } catch (error) {
+        logger.error(`Error: ${error.message}`);
+        res.status(500).send("Error adding data");
+    }
+});
+
+
 
 
 
