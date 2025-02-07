@@ -165,17 +165,17 @@ async function sendBlockchainTransaction(method, params) {
 app.post('/api/pigs', async function(req,res)
 {
     try {
-        const { pigId, birthDate, geneticLineage, farmId } = req.body;
+        const { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId } = req.body;
         logger.info("Calculating Merkle");
 
-        const saltedHashes = [pigId, birthDate, geneticLineage, farmId].map(hashWithSalt);
+        const saltedHashes = [pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId ].map(hashWithSalt);
         const salts = saltedHashes.map(hash => hash.salt);
         const leaves = saltedHashes.map(hash => hash.hash);
 
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
-        const ipfsData = { pigId, birthDate, geneticLineage, farmId };
+        const ipfsData = { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId };
         const ipfs_cid = await uploadToIPFS(ipfsData);
         logger.info("Data added to IPFS");
 
@@ -183,8 +183,8 @@ app.post('/api/pigs', async function(req,res)
         const receipt = await sendBlockchainTransaction(contract.methods.registerPig,[pigId, merkleroot, ipfs_cid]);
         logger.info(`Transaction successful with hash: ${receipt.transactionHash}`);
 
-        const insertQuery = `INSERT INTO pigs (pig_id, birth_date, genetic_lineage, farm_id, salt1, salt2, salt3, salt4) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
-        const insertValues = [pigId, birthDate, geneticLineage, farmId, ...salts];
+        const insertQuery = `INSERT INTO pig_profiles (pig_id, birth_date, sold_at, breed, genetic_lineage, birth_weight, ear_tag, sex, status, farm_id, salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`;
+        const insertValues = [pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId , ...salts];
         await pool.query(insertQuery, insertValues);
 
         res.send("Data added");
@@ -194,6 +194,8 @@ app.post('/api/pigs', async function(req,res)
         res.status(500).send("Error adding data");
     }
 });
+
+
 
 
 
