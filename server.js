@@ -230,6 +230,40 @@ app.post('/api/vaccination', async function(req,res)
 });
 
 
+app.post('/api/sales', async function(req,res)
+{
+    try {
+        const { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price } = req.body;
+        logger.info("Calculating Merkle");
+
+        const saltedHashes = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price ].map(hashWithSalt);
+        const salts = saltedHashes.map(hash => hash.salt);
+        const leaves = saltedHashes.map(hash => hash.hash);
+
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        const merkleroot = "0x" + tree.getRoot().toString("hex");
+
+        const ipfsData = { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price };
+        const ipfs_cid = await uploadToIPFS(ipfsData);
+        logger.info("Data added to IPFS");
+
+        
+        const receipt = await sendBlockchainTransaction(contract.methods.recordSale,[pigId, merkleroot, ipfs_cid]);
+        logger.info(`Transaction successful with hash: ${receipt.transactionHash}`);
+
+        const insertQuery = `INSERT INTO sales (sale_id, pig_id, sale_date, final_weight, buyer_name, buyer_contact, price, salt1, salt2, salt3, salt4, salt5, salt6, salt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
+        const insertValues = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price , ...salts];
+        await pool.query(insertQuery, insertValues);
+
+        res.send("Data added");
+        logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
+    } catch (error) {
+        logger.error(`Error: ${error.message}`);
+        res.status(500).send("Error adding data");
+    }
+});
+
+
 
 
 
