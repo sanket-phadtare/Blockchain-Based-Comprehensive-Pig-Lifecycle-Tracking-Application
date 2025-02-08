@@ -176,8 +176,7 @@ app.post('/api/pigs', async function(req,res)
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
         const qrId = Math.floor(Math.random() * 1000);
-        const qrhash = crypto.createHash('sha256').update(pigId.toString()).digest('hex');
-        const qrCodeBase64 = Buffer.from(qrhash).toString('base64');
+        const qrCodeBase64 = Buffer.from(pigId.toString()).toString('base64');
 
         const ipfsData = { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId };
         const ipfs_cid = await uploadToIPFS(ipfsData);
