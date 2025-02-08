@@ -271,7 +271,57 @@ app.post('/api/sales', async function(req,res)
 });
 
 
+app.post("/api/verify", async function(req,res)
+{
+  const {qrCode} = req.body;
+  try
+  {
+    const decodedPigId = Buffer.from(qrCode, 'base64').toString();
+    const data = await contract.methods.getPigData(decodedPigId).call();
+        
+        if (!data || data.length === 0)
+        {
+            return res.status(404).json({ message: 'Product not found' });
+        }
 
+    const block_merkle = data[1]; 
+    const p_cid = data[2];
+
+    const query = `SELECT * FROM pig_profiles WHERE pig_id = $1`;
+    const result = await pool.query(query, [decodedPigId]);
+
+    if (result.rows.length === 0) {
+        logger.warn("Product not found in database");
+        return res.status(404).json({ message: 'Product not found in database' });
+    }
+    
+    const { salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10 } = result.rows[0];
+    const url = `https://gateway.pinata.cloud/ipfs/${p_cid}`;
+    const response = await axios.get(url);
+    const jsonData = response.data;
+
+    const leaves = [decodedPigId, jsonData.birthDate, jsonData.soldAt, jsonData.breed, jsonData.geneticLineage, jsonData.birthWeight, jsonData.earTag, jsonData.sex, jsonData.status, jsonData.farmId]
+        .map((value, index) => keccak256([salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10][index] + value).toString('hex'));
+
+    const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    const verifyMerkleRoot = "0x" + tree.getRoot().toString("hex");
+
+    logger.info(`Blockchain Merkle Root: ${block_merkle}, Calculated Merkle Root: ${verifyMerkleRoot}`);
+    
+    if (block_merkle === verifyMerkleRoot) {
+        logger.info("Authentic Product");
+        res.json({ message: "Authentic Product", block_merkle, verifyMerkleRoot });
+    } else {
+        logger.info("Tampered Product");
+        res.json({ message: "Tampered Product" });
+    }
+  }
+catch (error)
+{
+  logger.error(`Error: ${error.message}`);
+        res.status(500).send("Error verifying data");
+}
+});
 
 
 
