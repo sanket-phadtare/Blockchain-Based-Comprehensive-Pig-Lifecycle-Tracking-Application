@@ -175,6 +175,10 @@ app.post('/api/pigs', async function(req,res)
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
+        const qrId = Math.floor(Math.random() * 1000);
+        const qrhash = crypto.createHash('sha256').update(pigId.toString()).digest('hex');
+        const qrCodeBase64 = Buffer.from(qrhash).toString('base64');
+
         const ipfsData = { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId };
         const ipfs_cid = await uploadToIPFS(ipfsData);
         logger.info("Data added to IPFS");
@@ -186,6 +190,10 @@ app.post('/api/pigs', async function(req,res)
         const insertQuery = `INSERT INTO pig_profiles (pig_id, birth_date, sold_at, breed, genetic_lineage, birth_weight, ear_tag, sex, status, farm_id, salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`;
         const insertValues = [pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId , ...salts];
         await pool.query(insertQuery, insertValues);
+        
+        const insertQr = `INSERT INTO qr_codes (qr_id, pig_id, qr_code_data) VALUES ($1, $2, $3)`;
+        const insertQrValues = [qrId ,pigId, qrCodeBase64];
+        await pool.query(insertQr, insertQrValues);
 
         res.send("Data added");
         logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
