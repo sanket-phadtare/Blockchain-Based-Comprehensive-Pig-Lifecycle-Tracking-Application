@@ -422,6 +422,7 @@ app.post("/api/verify", async function(req,res)
     const verifyPigMerkleRoot = "0x" + tree.getRoot().toString("hex");
 
     logger.info(`Blockchain Merkle Root: ${pig_block_merkle}, Calculated Merkle Root: ${verifyPigMerkleRoot}`);
+    const isPigValid = (pig_block_merkle === verifyPigMerkleRoot);
    //###################################################################################################################################################
 
     const vaccination_data = await contract.methods.getVaccinationData(decodedPigId).call();
@@ -448,6 +449,7 @@ app.post("/api/verify", async function(req,res)
     const vverifyVaccineMerkleRoot = "0x" + vtree.getRoot().toString("hex");
 
     logger.info(`Blockchain Merkle Root: ${vaccine_block_merkle}, Calculated Merkle Root: ${vverifyVaccineMerkleRoot}`);
+    const isVaccineValid = (vaccine_block_merkle === vverifyVaccineMerkleRoot);
 	//###########################################################################################################################################################
 
 	const sales_data = await contract.methods.getSalesData(decodedPigId).call();
@@ -474,14 +476,15 @@ app.post("/api/verify", async function(req,res)
     const sverifySalesMerkleRoot = "0x" + stree.getRoot().toString("hex");
 
     logger.info(`Blockchain Merkle Root: ${sales_block_merkle}, Calculated Merkle Root: ${sverifySalesMerkleRoot}`);
+    const isSaleValid = (sales_block_merkle === sverifySalesMerkleRoot);
     
-    //if (vaccine_block_merkle === vverifyVaccineMerkleRoot) {
-       // logger.info("Authentic Product");
-     //   res.json({ message: "Authentic Product", vaccine_block_merkle, vverifyVaccineMerkleRoot });
-   // } else {
-     //   logger.info("Tampered Product");
-      //  res.json({ message: "Tampered Product" });
-   // }
+    if (isPigValid && isVaccineValid && isSaleValid) {
+        logger.info("Product Verified: Authentic");
+        return res.json({ message: "✅ Product is Authentic", status: "Verified" });
+    } else {
+        logger.warn("⚠️ Product Verification Failed: Data Tampered");
+        return res.json({ message: "Product data is tampered", status: "Tampered" });
+    }
   }
 catch (error)
 {
