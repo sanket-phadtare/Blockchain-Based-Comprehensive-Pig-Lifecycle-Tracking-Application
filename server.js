@@ -38,448 +38,188 @@ const pool = new Pool({
 
 const web3 = new Web3('https://rpc-amoy.polygon.technology/');
 const contractABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "vaccine_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "addVaccination",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "qr_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "generateQRCode",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "pig_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "PigRegistered",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "qr_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "QRCodeGenerated",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "sales_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "recordSale",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "pig_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "registerPig",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "sales_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "SaleRecorded",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "vaccine_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"name": "VaccinationAdded",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pigg_id",
-				"type": "uint256"
-			}
-		],
-		"name": "getPigData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pigg_id",
-				"type": "uint256"
-			}
-		],
-		"name": "getQRData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pigg_id",
-				"type": "uint256"
-			}
-		],
-		"name": "getSalesData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pigg_id",
-				"type": "uint256"
-			}
-		],
-		"name": "getVaccinationData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "pigData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "pig_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "qrData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "qr_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "salesData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "sales_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "vaccinationData",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "pig_id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "vaccine_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfs_cid",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "vaccine_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "addVaccination",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "qr_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "generateQRCode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {"inputs": [], "stateMutability": "nonpayable", "type": "constructor"},
+    {
+        "anonymous": false,
+        "inputs": [
+            {"indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"indexed": false, "internalType": "bytes32", "name": "pig_hash", "type": "bytes32"},
+            {"indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "PigRegistered",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {"indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"indexed": false, "internalType": "bytes32", "name": "qr_hash", "type": "bytes32"},
+            {"indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "QRCodeGenerated",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "sales_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "recordSale",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "pig_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "registerPig",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {"indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"indexed": false, "internalType": "bytes32", "name": "sales_hash", "type": "bytes32"},
+            {"indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "SaleRecorded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {"indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"indexed": false, "internalType": "bytes32", "name": "vaccine_hash", "type": "bytes32"},
+            {"indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "name": "VaccinationAdded",
+        "type": "event"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "pigg_id", "type": "uint256"}],
+        "name": "getPigData",
+        "outputs": [
+            {"internalType": "uint256", "name": "", "type": "uint256"},
+            {"internalType": "bytes32", "name": "", "type": "bytes32"},
+            {"internalType": "string", "name": "", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "pigg_id", "type": "uint256"}],
+        "name": "getQRData",
+        "outputs": [
+            {"internalType": "uint256", "name": "", "type": "uint256"},
+            {"internalType": "bytes32", "name": "", "type": "bytes32"},
+            {"internalType": "string", "name": "", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "pigg_id", "type": "uint256"}],
+        "name": "getSalesData",
+        "outputs": [
+            {"internalType": "uint256", "name": "", "type": "uint256"},
+            {"internalType": "bytes32", "name": "", "type": "bytes32"},
+            {"internalType": "string", "name": "", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "pigg_id", "type": "uint256"}],
+        "name": "getVaccinationData",
+        "outputs": [
+            {"internalType": "uint256", "name": "", "type": "uint256"},
+            {"internalType": "bytes32", "name": "", "type": "bytes32"},
+            {"internalType": "string", "name": "", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {"internalType": "address", "name": "", "type": "address"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "name": "pigData",
+        "outputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "pig_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "name": "qrData",
+        "outputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "qr_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "name": "salesData",
+        "outputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "sales_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "name": "vaccinationData",
+        "outputs": [
+            {"internalType": "uint256", "name": "pig_id", "type": "uint256"},
+            {"internalType": "bytes32", "name": "vaccine_hash", "type": "bytes32"},
+            {"internalType": "string", "name": "ipfs_cid", "type": "string"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
 ];
   
 const contractAddress = process.env.CONTRACT_ADDRESS;
@@ -632,7 +372,7 @@ app.post('/api/sales', async function(req,res)
         const receipt = await sendBlockchainTransaction(contract.methods.recordSale,[pigId, merkleroot, ipfs_cid]);
         logger.info(`Transaction successful with hash: ${receipt.transactionHash}`);
 
-        const insertQuery = `INSERT INTO sales (sale_id, pig_id, sale_date, final_weight, buyer_name, buyer_contact, price, salt1, salt2, salt3, salt4, salt5, salt6, salt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
+        const insertQuery = `INSERT INTO sales (sale_id, pig_id, sale_date, final_weight, buyer_name, buyer_contact, price, ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
         const insertValues = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price , ...salts];
         await pool.query(insertQuery, insertValues);
 
@@ -708,6 +448,32 @@ app.post("/api/verify", async function(req,res)
     const vverifyVaccineMerkleRoot = "0x" + vtree.getRoot().toString("hex");
 
     logger.info(`Blockchain Merkle Root: ${vaccine_block_merkle}, Calculated Merkle Root: ${vverifyVaccineMerkleRoot}`);
+	//###########################################################################################################################################################
+
+	const sales_data = await contract.methods.getSalesData(decodedPigId).call();
+    const sales_block_merkle = sales_data[1];
+    const sales_cid = sales_data[2];
+
+    const query2 = `SELECT * FROM sales WHERE pig_id = $1`;
+    const result2 = await pool.query(query2, [decodedPigId]);
+
+    if (result2.rows.length === 0) {
+        logger.warn("Product not found in database");
+        return res.status(404).json({ message: 'Product not found in database' });
+    }
+    
+    const { ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7 } = result2.rows[0];
+    const surl = `https://gateway.pinata.cloud/ipfs/${sales_cid}`;
+    const sresponse = await axios.get(surl);
+    const sjsonData = sresponse.data;
+
+    const sleaves = [sjsonData.saleId, decodedPigId, sjsonData.saleDate, sjsonData.finalWeight, sjsonData.buyerName, sjsonData.buyerContact, sjsonData.price]
+        .map((value, index) => keccak256([ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7][index] + value).toString('hex'));
+
+    const stree = new MerkleTree(sleaves, keccak256, { sortPairs: true });
+    const sverifySalesMerkleRoot = "0x" + stree.getRoot().toString("hex");
+
+    logger.info(`Blockchain Merkle Root: ${sales_block_merkle}, Calculated Merkle Root: ${sverifySalesMerkleRoot}`);
     
     //if (vaccine_block_merkle === vverifyVaccineMerkleRoot) {
        // logger.info("Authentic Product");
