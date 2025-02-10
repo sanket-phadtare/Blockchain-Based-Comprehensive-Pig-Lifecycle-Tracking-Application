@@ -480,9 +480,9 @@ app.post("/api/verify", async function(req,res)
     
     if (isPigValid && isVaccineValid && isSaleValid) {
         logger.info("Product Verified: Authentic");
-        return res.json({ message: "✅ Product is Authentic", status: "Verified" });
+        return res.json({ message: "Product is Authentic", status: "Verified" });
     } else {
-        logger.warn("⚠️ Product Verification Failed: Data Tampered");
+        logger.warn("Product Verification Failed: Data Tampered");
         return res.json({ message: "Product data is tampered", status: "Tampered" });
     }
   }
