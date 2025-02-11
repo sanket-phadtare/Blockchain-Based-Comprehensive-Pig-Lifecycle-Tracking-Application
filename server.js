@@ -7,11 +7,13 @@ import axios from 'axios';
 import { MerkleTree } from 'merkletreejs';
 import keccak256 from 'keccak256';
 import winston from 'winston';
+import Redis from 'ioredis'; 
 
 const { Pool } = pg;
 dotenv.config();
 const app = express();
 app.use(express.json());
+const redisClient = new Redis(); 
 
 
 const logger = winston.createLogger({
@@ -392,6 +394,15 @@ app.post("/api/verify", async function(req,res)
   {
     logger.info("Please wait while we verify your product...")
     const decodedPigId = Buffer.from(qrCode, 'base64').toString();
+    const cacheKey = `product:${decodedPigId}`;
+    let cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+        const verificationResult = JSON.parse(cachedData);
+        logger.info("Product Verified (Hit Cache):", verificationResult);
+        return res.json(verificationResult);
+    }
+
     const data = await contract.methods.getPigData(decodedPigId).call();
         
         if (!data || data.length === 0)
@@ -477,19 +488,27 @@ app.post("/api/verify", async function(req,res)
 
     logger.info(`Blockchain Merkle Root: ${sales_block_merkle}, Calculated Merkle Root: ${sverifySalesMerkleRoot}`);
     const isSaleValid = (sales_block_merkle === sverifySalesMerkleRoot);
+
+    
     
     if (isPigValid && isVaccineValid && isSaleValid) {
+        const verificationResult = { message: "Product is Authentic", status: "Verified" };
         logger.info("Product Verified: Authentic");
-        return res.json({ message: "Product is Authentic", status: "Verified" });
-    } else {
+        await redisClient.set(cacheKey, JSON.stringify(verificationResult), 'EX', 3600); 
+        return res.json(verificationResult);
+    } 
+    else 
+    {
+        const verificationResult = { message: "Product data is tampered", status: "Tampered" };
         logger.warn("Product Verification Failed: Data Tampered");
-        return res.json({ message: "Product data is tampered", status: "Tampered" });
+        await redisClient.set(cacheKey, JSON.stringify(verificationResult), 'EX', 600); 
+        return res.json(verificationResult);
     }
-  }
-catch (error)
+} 
+catch (error) 
 {
-  logger.error(`Error: ${error.message}`);
-        res.status(500).send("Error verifying data");
+    logger.error(`Error: ${error.message}`);
+    res.status(500).send("Error verifying data");
 }
 });
 
