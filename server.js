@@ -305,7 +305,7 @@ app.post('/api/pigs', async function(req,res)
         const insertValues = [pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId , ...salts];
         await pool.query(insertQuery, insertValues);
         
-        const insertQr = `INSERT INTO pig_qr_codes (pig_id, qr_code_data) VALUES ($1, $2)`;
+        const insertQr = `INSERT INTO qr_codes (pig_id, qr_code_data) VALUES ($1, $2)`;
         const insertQrValues = [pigId, qrCodeBase64];
         await pool.query(insertQr, insertQrValues);
 
