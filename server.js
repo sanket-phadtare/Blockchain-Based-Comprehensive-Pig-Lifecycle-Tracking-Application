@@ -398,6 +398,78 @@ app.post('/api/sales', async function(req,res)
 });
 
 
+app.post("/api/verify/pig", async function(req,res)
+{
+    const{p_qr_code} = req.body;
+    try
+    {
+        logger.info("Please wait while we verify Pig details...")
+        const decodePigId = Buffer.from(p_qr_code, 'base64').toString();
+        const cacheKey = `pig:${decodePigId}`;
+        let cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+        const verifyResult = JSON.parse(cachedData);
+        logger.info("Product Verified (Hit Cache):", verifyResult);
+        return res.json(verifyResult);
+    }
+
+    const data = await contract.methods.getPigData(decodePigId).call();
+        
+        if (!data || data.length === 0)
+        {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+    const pig_block_merkle_root = data[1]; 
+    const pig_p_ipfs_hash = data[2];
+
+    const query = `SELECT * FROM pig_profiles WHERE pig_id = $1`;
+    const result = await pool.query(query, [decodePigId]);
+
+    if (result.rows.length === 0) {
+        logger.warn("Product not found in database");
+        return res.status(404).json({ message: 'Product not found in database' });
+    }
+    
+    const { salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10 } = result.rows[0];
+    const url = `https://gateway.pinata.cloud/ipfs/${pig_p_ipfs_hash}`;
+    const response = await axios.get(url);
+    const jsonData = response.data;
+
+    const leaves = [decodePigId, jsonData.birthDate, jsonData.soldAt, jsonData.breed, jsonData.geneticLineage, jsonData.birthWeight, jsonData.earTag, jsonData.sex, jsonData.status, jsonData.farmId]
+        .map((value, index) => keccak256([salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10][index] + value).toString('hex'));
+
+    const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    const pigVerifyMerkleRoot = "0x" + tree.getRoot().toString("hex");
+
+    logger.info(`Blockchain Merkle Root: ${pig_block_merkle_root}, Calculated Merkle Root: ${pigVerifyMerkleRoot}`);
+    const isPigVerificationValid = (pig_block_merkle_root === pigVerifyMerkleRoot);
+
+    if (isPigVerificationValid) {
+        const verifyResult = { message: "Pig Data is Authentic", status: "Verified" };
+        logger.info("Pig Verified: Authentic");
+        await redisClient.set(cacheKey, JSON.stringify(verifyResult), 'EX', 3600); 
+        return res.json(verifyResult);
+    } 
+    else 
+    {
+        const verificationResult = { message: "Pig data is tampered", status: "Tampered" };
+        logger.warn("Pig Verification Failed: Data Tampered");
+        await redisClient.set(cacheKey, JSON.stringify(verificationResult), 'EX', 600); 
+        return res.json(verificationResult);
+    }
+        
+
+    }
+    catch (error)
+    {
+        logger.error(`Error: ${error.message}`);
+    res.status(500).send("Error verifying data");
+    }
+});
+
+
 app.post("/api/verify", async function(req,res)
 {
   const {qrCode} = req.body;
