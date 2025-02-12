@@ -291,7 +291,6 @@ app.post('/api/pigs', async function(req,res)
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
-        const qrId = Math.floor(Math.random() * 1000);
         const qrCodeBase64 = Buffer.from(pigId.toString()).toString('base64');
 
         const ipfsData = { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId };
@@ -306,8 +305,8 @@ app.post('/api/pigs', async function(req,res)
         const insertValues = [pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId , ...salts];
         await pool.query(insertQuery, insertValues);
         
-        const insertQr = `INSERT INTO qr_codes (qr_id, pig_id, qr_code_data) VALUES ($1, $2, $3)`;
-        const insertQrValues = [qrId ,pigId, qrCodeBase64];
+        const insertQr = `INSERT INTO pig_qr_codes (pig_id, qr_code_data) VALUES ($1, $2)`;
+        const insertQrValues = [pigId, qrCodeBase64];
         await pool.query(insertQr, insertQrValues);
 
         res.send("Data added");
@@ -332,6 +331,8 @@ app.post('/api/vaccination', async function(req,res)
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
+        const vqrCodeBase64 = Buffer.from(vaccinationId.toString()).toString('base64');
+
         const ipfsData = { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate };
         const ipfs_cid = await uploadToIPFS(ipfsData);
         logger.info("Data added to IPFS");
@@ -343,6 +344,10 @@ app.post('/api/vaccination', async function(req,res)
         const insertQuery = `INSERT INTO vaccination_logs (vaccination_id, pig_id, vaccine_name, batch_number, administered_by, admin_date, next_due_date, vsalt1, vsalt2, vsalt3, vsalt4, vsalt5, vsalt6, vsalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
         const insertValues = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate , ...salts];
         await pool.query(insertQuery, insertValues);
+
+        const insertQr = `INSERT INTO vaccination_qr_codes (vaccine_id, qr_code_data) VALUES ($1, $2)`;
+        const insertQrValues = [vaccinationId, vqrCodeBase64];
+        await pool.query(insertQr, insertQrValues);
 
         res.send("Data added");
         logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
@@ -366,6 +371,8 @@ app.post('/api/sales', async function(req,res)
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
+        const sqrCodeBase64 = Buffer.from(saleId.toString()).toString('base64');
+
         const ipfsData = { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price };
         const ipfs_cid = await uploadToIPFS(ipfsData);
         logger.info("Data added to IPFS");
@@ -377,6 +384,10 @@ app.post('/api/sales', async function(req,res)
         const insertQuery = `INSERT INTO sales (sale_id, pig_id, sale_date, final_weight, buyer_name, buyer_contact, price, ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
         const insertValues = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price , ...salts];
         await pool.query(insertQuery, insertValues);
+
+        const insertQr = `INSERT INTO sales_qr_codes (sales_id, qr_code_data) VALUES ($1, $2)`;
+        const insertQrValues = [saleId, sqrCodeBase64];
+        await pool.query(insertQr, insertQrValues);
 
         res.send("Data added");
         logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
