@@ -531,6 +531,77 @@ app.post("/api/verify/vaccination", async function(req,res)
 });
 
 
+app.post("/api/verify/sales", async function(req,res)
+{
+    const{p_qr_code} = req.body;
+    try
+    {
+        logger.info("Please wait while we verify Sales Record...")
+        const decodePigId = Buffer.from(p_qr_code, 'base64').toString();
+        const cacheKey = `sales:${decodePigId}`;
+        let cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+        const verifyResult = JSON.parse(cachedData);
+        logger.info("Sales Record Verified (Hit Cache):", verifyResult);
+        return res.json(verifyResult);
+    }
+
+    const data = await contract.methods.getSalesData(decodePigId).call();
+        
+        if (!data || data.length === 0)
+        {
+            return res.status(404).json({ message: 'Details not found' });
+        }
+
+    const sales_block_merkle_root = data[1]; 
+    const sales_ipfs_hash = data[2];
+
+    const query = `SELECT * FROM sales WHERE pig_id = $1`;
+    const result = await pool.query(query, [decodePigId]);
+
+    if (result.rows.length === 0) {
+        logger.warn("Product not found in database");
+        return res.status(404).json({ message: 'Product not found in database' });
+    }
+    
+    const { ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7} = result.rows[0];
+    const url = `https://gateway.pinata.cloud/ipfs/${sales_ipfs_hash}`;
+    const response = await axios.get(url);
+    const jsonData = response.data;
+
+    const leaves = [jsonData.saleId, decodePigId, jsonData.saleDate, jsonData.finalWeight, jsonData.buyerName, jsonData.buyerContact, jsonData.price]
+        .map((value, index) => keccak256([ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7][index] + value).toString('hex'));
+
+    const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    const salesVerifyMerkleRoot = "0x" + tree.getRoot().toString("hex");
+
+    logger.info(`Blockchain Merkle Root: ${sales_block_merkle_root}, Calculated Merkle Root: ${salesVerifyMerkleRoot}`);
+    const issalesVerificationValid = (sales_block_merkle_root === salesVerifyMerkleRoot);
+
+    if (issalesVerificationValid) {
+        const verifyResult = { message: "Sales Record is Authentic", status: "Verified" };
+        logger.info("Sales Record Verified: Authentic");
+        await redisClient.set(cacheKey, JSON.stringify(verifyResult), 'EX', 3600); 
+        return res.json(verifyResult);
+    } 
+    else 
+    {
+        const verificationResult = { message: "Sales Record is tampered", status: "Tampered" };
+        logger.warn("Sales Record Verification Failed: Data Tampered");
+        await redisClient.set(cacheKey, JSON.stringify(verificationResult), 'EX', 600); 
+        return res.json(verificationResult);
+    }
+        
+
+    }
+    catch (error)
+    {
+        logger.error(`Error: ${error.message}`);
+    res.status(500).send("Error verifying data");
+    }
+});
+
 
 
 app.post("/api/verify", async function(req,res)
