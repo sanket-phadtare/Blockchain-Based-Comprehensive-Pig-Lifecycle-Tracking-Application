@@ -331,8 +331,6 @@ app.post('/api/vaccination', async function(req,res)
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
-        const vqrCodeBase64 = Buffer.from(vaccinationId.toString()).toString('base64');
-
         const ipfsData = { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate };
         const ipfs_cid = await uploadToIPFS(ipfsData);
         logger.info("Data added to IPFS");
@@ -344,10 +342,6 @@ app.post('/api/vaccination', async function(req,res)
         const insertQuery = `INSERT INTO vaccination_logs (vaccination_id, pig_id, vaccine_name, batch_number, administered_by, admin_date, next_due_date, vsalt1, vsalt2, vsalt3, vsalt4, vsalt5, vsalt6, vsalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
         const insertValues = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate , ...salts];
         await pool.query(insertQuery, insertValues);
-
-        const insertQr = `INSERT INTO vaccination_qr_codes (vaccine_id, qr_code_data) VALUES ($1, $2)`;
-        const insertQrValues = [vaccinationId, vqrCodeBase64];
-        await pool.query(insertQr, insertQrValues);
 
         res.send("Data added");
         logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
@@ -371,8 +365,6 @@ app.post('/api/sales', async function(req,res)
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const merkleroot = "0x" + tree.getRoot().toString("hex");
 
-        const sqrCodeBase64 = Buffer.from(saleId.toString()).toString('base64');
-
         const ipfsData = { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price };
         const ipfs_cid = await uploadToIPFS(ipfsData);
         logger.info("Data added to IPFS");
@@ -384,10 +376,6 @@ app.post('/api/sales', async function(req,res)
         const insertQuery = `INSERT INTO sales (sale_id, pig_id, sale_date, final_weight, buyer_name, buyer_contact, price, ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
         const insertValues = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price , ...salts];
         await pool.query(insertQuery, insertValues);
-
-        const insertQr = `INSERT INTO sales_qr_codes (sales_id, qr_code_data) VALUES ($1, $2)`;
-        const insertQrValues = [saleId, sqrCodeBase64];
-        await pool.query(insertQr, insertQrValues);
 
         res.send("Data added");
         logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
@@ -410,7 +398,7 @@ app.post("/api/verify/pig", async function(req,res)
 
     if (cachedData) {
         const verifyResult = JSON.parse(cachedData);
-        logger.info("Product Verified (Hit Cache):", verifyResult);
+        logger.info("Pig Details Verified (Hit Cache):", verifyResult);
         return res.json(verifyResult);
     }
 
@@ -468,6 +456,81 @@ app.post("/api/verify/pig", async function(req,res)
     res.status(500).send("Error verifying data");
     }
 });
+
+
+
+app.post("/api/verify/vaccination", async function(req,res)
+{
+    const{p_qr_code} = req.body;
+    try
+    {
+        logger.info("Please wait while we verify Vaccination details...")
+        const decodePigId = Buffer.from(p_qr_code, 'base64').toString();
+        const cacheKey = `vaccine:${decodePigId}`;
+        let cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+        const verifyResult = JSON.parse(cachedData);
+        logger.info("Vaccination Details Verified (Hit Cache):", verifyResult);
+        return res.json(verifyResult);
+    }
+
+    const data = await contract.methods.getVaccinationData(decodePigId).call();
+        
+        if (!data || data.length === 0)
+        {
+            return res.status(404).json({ message: 'Details not found' });
+        }
+
+    const vaccine_block_merkle_root = data[1]; 
+    const vaccine_ipfs_hash = data[2];
+
+    const query = `SELECT * FROM vaccination_logs WHERE pig_id = $1`;
+    const result = await pool.query(query, [decodePigId]);
+
+    if (result.rows.length === 0) {
+        logger.warn("Product not found in database");
+        return res.status(404).json({ message: 'Product not found in database' });
+    }
+    
+    const { vsalt1, vsalt2, vsalt3, vsalt4, vsalt5, vsalt6, vsalt7} = result.rows[0];
+    const url = `https://gateway.pinata.cloud/ipfs/${vaccine_ipfs_hash}`;
+    const response = await axios.get(url);
+    const jsonData = response.data;
+
+    const leaves = [jsonData.vaccinationId, decodePigId, jsonData.vaccineName, jsonData.batchNumber, jsonData.administeredBy, jsonData.adminDate, jsonData.nextDueDate]
+        .map((value, index) => keccak256([vsalt1, vsalt2, vsalt3, vsalt4, vsalt5, vsalt6, vsalt7][index] + value).toString('hex'));
+
+    const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    const vaccineVerifyMerkleRoot = "0x" + tree.getRoot().toString("hex");
+
+    logger.info(`Blockchain Merkle Root: ${vaccine_block_merkle_root}, Calculated Merkle Root: ${vaccineVerifyMerkleRoot}`);
+    const isvaccineVerificationValid = (vaccine_block_merkle_root === vaccineVerifyMerkleRoot);
+
+    if (isvaccineVerificationValid) {
+        const verifyResult = { message: "Vaccination Data is Authentic", status: "Verified" };
+        logger.info("Vaccination Details Verified: Authentic");
+        await redisClient.set(cacheKey, JSON.stringify(verifyResult), 'EX', 3600); 
+        return res.json(verifyResult);
+    } 
+    else 
+    {
+        const verificationResult = { message: "Vaccination data is tampered", status: "Tampered" };
+        logger.warn("Vaccination Verification Failed: Data Tampered");
+        await redisClient.set(cacheKey, JSON.stringify(verificationResult), 'EX', 600); 
+        return res.json(verificationResult);
+    }
+        
+
+    }
+    catch (error)
+    {
+        logger.error(`Error: ${error.message}`);
+    res.status(500).send("Error verifying data");
+    }
+});
+
+
 
 
 app.post("/api/verify", async function(req,res)
