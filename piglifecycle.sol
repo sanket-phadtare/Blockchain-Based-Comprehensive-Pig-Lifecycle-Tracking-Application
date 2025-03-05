@@ -60,10 +60,17 @@ contract PigLifecycle {
         }
     }
 
-    function addVaccination(uint256 pig_id, bytes32 vaccine_hash, string memory ipfs_cid) public onlyOwner {
-        require(vaccinationData[pig_id].pig_id == 0, "Vaccination already added");
-        vaccinationData[pig_id] = VaccinationData(pig_id, vaccine_hash, ipfs_cid);
-        emit VaccinationAdded(pig_id, vaccine_hash, ipfs_cid);
+    function addVaccination(uint256[] memory pig_id, bytes32[] memory vaccine_hash, string[] memory ipfs_cid) public onlyOwner {
+       require(
+            pig_id.length == vaccine_hash.length && pig_id.length == ipfs_cid.length, 
+            "Input array lengths must match"
+        );
+       for(uint256 i=0; i< pig_id.length; i++)
+       {
+        require(vaccinationData[pig_id[i]].pig_id == 0, "Vaccine already recorded");
+        vaccinationData[pig_id[i]] = VaccinationData(pig_id[i], vaccine_hash[i], ipfs_cid[i]);
+        emit VaccinationAdded(pig_id[i], vaccine_hash[i], ipfs_cid[i]);
+       }
     }
 
     function recordSale(uint256 pig_id, bytes32 sales_hash, string memory ipfs_cid) public onlyOwner {
