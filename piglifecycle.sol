@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract piglifecycle {
+contract PigLifecycle {
     struct PigData {
         uint256 pig_id;
         bytes32 pig_hash;
@@ -47,52 +47,54 @@ contract piglifecycle {
         _;
     }
 
+    function registerPig(uint256[] memory pig_ids, bytes32[] memory pig_hashes, string[] memory ipfs_cids) public onlyOwner {
+        require(
+            pig_ids.length == pig_hashes.length && pig_ids.length == ipfs_cids.length, 
+            "Input array lengths must match"
+        );
 
-    function registerPig(uint256 pig_id, bytes32 pig_hash, string memory ipfs_cid) public {
-        require(pigData[pig_id].pig_id == 0, "Pig already registered");
-        pigData[pig_id] = PigData(pig_id, pig_hash, ipfs_cid);
-        emit PigRegistered(pig_id, pig_hash, ipfs_cid);
+        for (uint256 i = 0; i < pig_ids.length; i++) {
+            require(pigData[pig_ids[i]].pig_id == 0, "Pig already registered");
+            pigData[pig_ids[i]] = PigData(pig_ids[i], pig_hashes[i], ipfs_cids[i]);
+            emit PigRegistered(pig_ids[i], pig_hashes[i], ipfs_cids[i]);
+        }
     }
 
-    function addVaccination(uint256 pig_id, bytes32 vaccine_hash, string memory ipfs_cid) public {
+    function addVaccination(uint256 pig_id, bytes32 vaccine_hash, string memory ipfs_cid) public onlyOwner {
         require(vaccinationData[pig_id].pig_id == 0, "Vaccination already added");
         vaccinationData[pig_id] = VaccinationData(pig_id, vaccine_hash, ipfs_cid);
         emit VaccinationAdded(pig_id, vaccine_hash, ipfs_cid);
     }
 
-    function recordSale(uint256 pig_id, bytes32 sales_hash, string memory ipfs_cid) public {
+    function recordSale(uint256 pig_id, bytes32 sales_hash, string memory ipfs_cid) public onlyOwner {
         require(salesData[pig_id].pig_id == 0, "Sale already recorded");
         salesData[pig_id] = SalesData(pig_id, sales_hash, ipfs_cid);
         emit SaleRecorded(pig_id, sales_hash, ipfs_cid);
     }
 
-    function generateQRCode(uint256 pig_id, bytes32 qr_hash, string memory ipfs_cid) public {
+    function generateQRCode(uint256 pig_id, bytes32 qr_hash, string memory ipfs_cid) public onlyOwner {
         require(qrData[pig_id].pig_id == 0, "QR code already generated");
         qrData[pig_id] = QRData(pig_id, qr_hash, ipfs_cid);
         emit QRCodeGenerated(pig_id, qr_hash, ipfs_cid);
     }
 
-    function getPigData(uint256 pigg_id) external view returns(uint256, bytes32, string memory)
-    {
-        require(pigData[pigg_id].pig_id !=0, "Pig Id does not exist");
-        return (pigData[pigg_id].pig_id, pigData[pigg_id].pig_hash, pigData[pigg_id].ipfs_cid);
+    function getPigData(uint256 pig_id) external view returns(uint256, bytes32, string memory) {
+        require(pigData[pig_id].pig_id != 0, "Pig ID does not exist");
+        return (pigData[pig_id].pig_id, pigData[pig_id].pig_hash, pigData[pig_id].ipfs_cid);
     }
 
-    function getVaccinationData(uint256 pigg_id) external view returns(uint256, bytes32, string memory)
-    {
-        require(vaccinationData[pigg_id].pig_id !=0, "Pig Id does not exist");
-        return(vaccinationData[pigg_id].pig_id, vaccinationData[pigg_id].vaccine_hash, vaccinationData[pigg_id].ipfs_cid);
+    function getVaccinationData(uint256 pig_id) external view returns(uint256, bytes32, string memory) {
+        require(vaccinationData[pig_id].pig_id != 0, "Pig ID does not exist");
+        return (vaccinationData[pig_id].pig_id, vaccinationData[pig_id].vaccine_hash, vaccinationData[pig_id].ipfs_cid);
     }
 
-    function getSalesData(uint256 pigg_id) external view returns(uint256, bytes32, string memory)
-    {
-        require(salesData[pigg_id].pig_id !=0, "Pig ID does not eixts");
-        return(salesData[pigg_id].pig_id, salesData[pigg_id].sales_hash, salesData[pigg_id].ipfs_cid);
+    function getSalesData(uint256 pig_id) external view returns(uint256, bytes32, string memory) {
+        require(salesData[pig_id].pig_id != 0, "Pig ID does not exist");
+        return (salesData[pig_id].pig_id, salesData[pig_id].sales_hash, salesData[pig_id].ipfs_cid);
     }
 
-    function getQRData(uint256 pigg_id) external view returns(uint256, bytes32, string memory)
-    {
-        require(qrData[pigg_id].pig_id !=0, "Pig ID does not exist");
-        return(qrData[pigg_id].pig_id, qrData[pigg_id].qr_hash, qrData[pigg_id].ipfs_cid);
+    function getQRData(uint256 pig_id) external view returns(uint256, bytes32, string memory) {
+        require(qrData[pig_id].pig_id != 0, "Pig ID does not exist");
+        return (qrData[pig_id].pig_id, qrData[pig_id].qr_hash, qrData[pig_id].ipfs_cid);
     }
 }
