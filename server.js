@@ -39,26 +39,7 @@ const pool = new Pool({
 
 
 const web3 = new Web3('https://rpc-amoy.polygon.technology/');
-const contractABI = [
-    { "inputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "internalType": "bytes32", "name": "vaccine_hash", "type": "bytes32" }, { "internalType": "string", "name": "ipfs_cid", "type": "string" }], "name": "addVaccination", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "internalType": "bytes32", "name": "qr_hash", "type": "bytes32" }, { "internalType": "string", "name": "ipfs_cid", "type": "string" }], "name": "generateQRCode", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-    { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
-    { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "indexed": false, "internalType": "bytes32", "name": "pig_hash", "type": "bytes32" }, { "indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string" }], "name": "PigRegistered", "type": "event" },
-    { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "indexed": false, "internalType": "bytes32", "name": "qr_hash", "type": "bytes32" }, { "indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string" }], "name": "QRCodeGenerated", "type": "event" },
-    { "inputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "internalType": "bytes32", "name": "sales_hash", "type": "bytes32" }, { "internalType": "string", "name": "ipfs_cid", "type": "string" }], "name": "recordSale", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-    { "inputs": [{ "internalType": "uint256[]", "name": "pig_ids", "type": "uint256[]" }, { "internalType": "bytes32[]", "name": "pig_hashes", "type": "bytes32[]" }, { "internalType": "string[]", "name": "ipfs_cids", "type": "string[]" }], "name": "registerPig", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-    { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "indexed": false, "internalType": "bytes32", "name": "sales_hash", "type": "bytes32" }, { "indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string" }], "name": "SaleRecorded", "type": "event" },
-    { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "indexed": false, "internalType": "bytes32", "name": "vaccine_hash", "type": "bytes32" }, { "indexed": false, "internalType": "string", "name": "ipfs_cid", "type": "string" }], "name": "VaccinationAdded", "type": "event" },
-    { "inputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }], "name": "getPigData", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "bytes32", "name": "", "type": "bytes32" }, { "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }], "name": "getQRData", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "bytes32", "name": "", "type": "bytes32" }, { "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }], "name": "getSalesData", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "bytes32", "name": "", "type": "bytes32" }, { "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }], "name": "getVaccinationData", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "bytes32", "name": "", "type": "bytes32" }, { "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "pigData", "outputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "internalType": "bytes32", "name": "pig_hash", "type": "bytes32" }, { "internalType": "string", "name": "ipfs_cid", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "qrData", "outputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "internalType": "bytes32", "name": "qr_hash", "type": "bytes32" }, { "internalType": "string", "name": "ipfs_cid", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "salesData", "outputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "internalType": "bytes32", "name": "sales_hash", "type": "bytes32" }, { "internalType": "string", "name": "ipfs_cid", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "vaccinationData", "outputs": [{ "internalType": "uint256", "name": "pig_id", "type": "uint256" }, { "internalType": "bytes32", "name": "vaccine_hash", "type": "bytes32" }, { "internalType": "string", "name": "ipfs_cid", "type": "string" }], "stateMutability": "view", "type": "function" }
-];
+const contractABI =JSON.parse(process.env.CONTRACT_ABI);
   
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const contract = new web3.eth.Contract(contractABI, contractAddress);
@@ -143,7 +124,7 @@ app.post('/api/pigs', async function (req, res) {
 
             const ipfsData = { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId };
             const ipfs_cid = await uploadToIPFS(ipfsData);
-            logger.info(`Data for pig ${pigId} added to IPFS`);
+            logger.info(`Data for added to IPFS`);
 
             pigIds.push(pigId);
             pigHashes.push(merkleroot);
@@ -152,7 +133,7 @@ app.post('/api/pigs', async function (req, res) {
             const insertQuery = `INSERT INTO pig_profiles (pig_id, birth_date, sold_at, breed, genetic_lineage, birth_weight, ear_tag, sex, status, farm_id, salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`;
             const insertValues = [pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId, ...salts];
 
-            logger.info(`Inserting pig ${pigId} with values: ${JSON.stringify(insertValues)}`);
+            logger.info(`Inserting Data into DB`);
 
             dbInsertions.push(pool.query(insertQuery, insertValues));
 
@@ -176,38 +157,59 @@ app.post('/api/pigs', async function (req, res) {
 });
 
 
-app.post('/api/vaccination', async function(req,res)
-{
+app.post('/api/vaccination', async function (req, res) {
     try {
-        const { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate } = req.body;
-        logger.info("Calculating Merkle");
+        const vaccinationsData = req.body;
+        if (!Array.isArray(vaccinationsData) || vaccinationsData.length === 0) {
+            return res.status(400).send("Invalid input: Expected an array of vaccination details");
+        }
 
-        const saltedHashes = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate ].map(hashWithSalt);
-        const salts = saltedHashes.map(hash => hash.salt);
-        const leaves = saltedHashes.map(hash => hash.hash);
+        const pigIds = [];
+        const vaccinationHashes = [];
+        const ipfsCids = [];
+        const dbInsertions = [];
 
-        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-        const merkleroot = "0x" + tree.getRoot().toString("hex");
+        logger.info("Processing batch of vaccinations");
 
-        const ipfsData = { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate };
-        const ipfs_cid = await uploadToIPFS(ipfsData);
-        logger.info("Data added to IPFS");
+        for (const vaccination of vaccinationsData) {
+            const { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate } = vaccination;
+            
+            const saltedHashes = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate].map(hashWithSalt);
+            const salts = saltedHashes.map(hash => hash.salt);
+            const leaves = saltedHashes.map(hash => hash.hash);
 
-        
-        const receipt = await sendBlockchainTransaction(contract.methods.addVaccination,[pigId, merkleroot, ipfs_cid]);
-        logger.info(`Transaction successful with hash: ${receipt.transactionHash}`);
+            const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+            const merkleroot = "0x" + tree.getRoot().toString("hex");
 
-        const insertQuery = `INSERT INTO vaccination_logs (vaccination_id, pig_id, vaccine_name, batch_number, administered_by, admin_date, next_due_date, vsalt1, vsalt2, vsalt3, vsalt4, vsalt5, vsalt6, vsalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
-        const insertValues = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate , ...salts];
-        await pool.query(insertQuery, insertValues);
+            const ipfsData = { vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate };
+            const ipfs_cid = await uploadToIPFS(ipfsData);
+            logger.info(`Data added to IPFS`);
 
-        res.send("Data added");
-        logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
+            pigIds.push(pigId);
+            vaccinationHashes.push(merkleroot);
+            ipfsCids.push(ipfs_cid);
+
+            const insertQuery = `INSERT INTO vaccination_logs (vaccination_id, pig_id, vaccine_name, batch_number, administered_by, admin_date, next_due_date, vsalt1, vsalt2, vsalt3, vsalt4, vsalt5, vsalt6, vsalt7) 
+                                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`;
+            const insertValues = [vaccinationId, pigId, vaccineName, batchNumber, administeredBy, adminDate, nextDueDate, ...salts];
+            
+            logger.info(`Inserting vaccination data into DB`);
+            dbInsertions.push(pool.query(insertQuery, insertValues));
+        }
+
+        const receipt = await sendBlockchainTransaction(contract.methods.addVaccination, [pigIds, vaccinationHashes, ipfsCids]);
+        logger.info(`Batch transaction successful with hash: ${receipt.transactionHash}`);
+
+        await Promise.all(dbInsertions);
+
+        res.send("Batch vaccination data added successfully");
+        logger.info(`Batch processed: ${vaccinationsData.length} vaccinations added`);
     } catch (error) {
         logger.error(`Error: ${error.message}`);
-        res.status(500).send("Error adding data");
+        res.status(500).send("Error adding batch vaccination data");
     }
 });
+
 
 
 app.post('/api/sales', async function(req,res)
