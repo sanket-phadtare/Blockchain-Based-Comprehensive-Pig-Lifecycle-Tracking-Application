@@ -54,7 +54,8 @@ contract PigLifecycle
         _;
     }
 
-    function registerPig(uint256[] memory pig_ids, bytes32[] memory pig_hashes, string[] memory ipfs_cids) public onlyOwner {
+    function registerPig(uint256[] memory pig_ids, bytes32[] memory pig_hashes, string[] memory ipfs_cids) public onlyOwner 
+    {
         require(pig_ids.length == pig_hashes.length && pig_ids.length == ipfs_cids.length, "Input array lengths must match");
 
         for (uint256 i = 0; i < pig_ids.length; i++) {
@@ -64,7 +65,8 @@ contract PigLifecycle
         }
     }
 
-    function addVaccination(uint256[] memory pig_id, bytes32[] memory vaccine_hash, string[] memory ipfs_cid) public onlyOwner {
+    function addVaccination(uint256[] memory pig_id, bytes32[] memory vaccine_hash, string[] memory ipfs_cid) public onlyOwner 
+    {
        require(pig_id.length == vaccine_hash.length && pig_id.length == ipfs_cid.length, "Input array lengths must match");
        for(uint256 i=0; i< pig_id.length; i++)
        {
@@ -74,7 +76,8 @@ contract PigLifecycle
        }
     }
 
-    function recordSale(uint256[] memory pig_id, bytes32[] memory sales_hash, string[] memory ipfs_cid) public onlyOwner {
+    function recordSale(uint256[] memory pig_id, bytes32[] memory sales_hash, string[] memory ipfs_cid) public onlyOwner 
+    {
         require(pig_id.length == sales_hash.length && pig_id.length == ipfs_cid.length, "Input array lengths must match");
 
         for(uint256 i=0; i<pig_id.length; i++)
