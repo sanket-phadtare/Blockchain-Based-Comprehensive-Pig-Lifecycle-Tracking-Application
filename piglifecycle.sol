@@ -58,7 +58,8 @@ contract PigLifecycle
     {
         require(pig_ids.length == pig_hashes.length && pig_ids.length == ipfs_cids.length, "Input array lengths must match");
 
-        for (uint256 i = 0; i < pig_ids.length; i++) {
+        for (uint256 i = 0; i < pig_ids.length; i++) 
+        {
             require(pigData[pig_ids[i]].pig_id == 0, "Pig already registered");
             pigData[pig_ids[i]] = PigData(pig_ids[i], pig_hashes[i], ipfs_cids[i]);
             emit PigRegistered(pig_ids[i], pig_hashes[i], ipfs_cids[i]);
