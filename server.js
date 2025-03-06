@@ -96,6 +96,7 @@ async function sendBlockchainTransaction(method, params) {
 }
 
 app.post('/api/pigs', async function (req, res) {
+    const client = await pool.connect();
     try {
         const pigsData = req.body; 
         if (!Array.isArray(pigsData) || pigsData.length === 0) {
@@ -105,10 +106,10 @@ app.post('/api/pigs', async function (req, res) {
         const pigIds = [];
         const pigHashes = [];
         const ipfsCids = [];
-        const dbInsertions = [];
-        const qrInsertions = [];
 
         logger.info("Processing batch of pigs");
+
+        await client.query('BEGIN'); 
 
         for (const pig of pigsData) {
             const { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId } = pig;
@@ -124,7 +125,7 @@ app.post('/api/pigs', async function (req, res) {
 
             const ipfsData = { pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId };
             const ipfs_cid = await uploadToIPFS(ipfsData);
-            logger.info(`Data for added to IPFS`);
+            logger.info(`Data for pig ${pigId} added to IPFS`);
 
             pigIds.push(pigId);
             pigHashes.push(merkleroot);
@@ -133,26 +134,26 @@ app.post('/api/pigs', async function (req, res) {
             const insertQuery = `INSERT INTO pig_profiles (pig_id, birth_date, sold_at, breed, genetic_lineage, birth_weight, ear_tag, sex, status, farm_id, salt1, salt2, salt3, salt4, salt5, salt6, salt7, salt8, salt9, salt10) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`;
             const insertValues = [pigId, birthDate, soldAt, breed, geneticLineage, birthWeight, earTag, sex, status, farmId, ...salts];
 
-            logger.info(`Inserting Data into DB`);
-
-            dbInsertions.push(pool.query(insertQuery, insertValues));
+            logger.info(`Inserting Data for pig ${pigId} into DB`);
+            await client.query(insertQuery, insertValues); 
 
             const insertQr = `INSERT INTO qr_codes (pig_id, qr_code_data) VALUES ($1, $2)`;
             const insertQrValues = [pigId, qrCodeBase64];
-            qrInsertions.push(pool.query(insertQr, insertQrValues));
+            await client.query(insertQr, insertQrValues); 
         }
 
         const receipt = await sendBlockchainTransaction(contract.methods.registerPig, [pigIds, pigHashes, ipfsCids]);
         logger.info(`Batch transaction successful with hash: ${receipt.transactionHash}`);
 
-        await Promise.all(dbInsertions);
-        await Promise.all(qrInsertions);
-
+        await client.query('COMMIT'); 
         res.send("Batch data added successfully");
         logger.info(`Batch processed: ${pigIds.length} pigs added`);
     } catch (error) {
+        await client.query('ROLLBACK'); 
         logger.error(`Error: ${error.message}`);
         res.status(500).send("Error adding batch data");
+    } finally {
+        client.release(); 
     }
 });
 
@@ -212,38 +213,58 @@ app.post('/api/vaccination', async function (req, res) {
 
 
 
-app.post('/api/sales', async function(req,res)
-{
+app.post('/api/sales', async function (req, res) {
     try {
-        const { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price } = req.body;
-        logger.info("Calculating Merkle");
+        const salesData = req.body;
+        if (!Array.isArray(salesData) || salesData.length === 0) {
+            return res.status(400).send("Invalid input: Expected an array of vaccination details");
+        }
 
-        const saltedHashes = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price ].map(hashWithSalt);
-        const salts = saltedHashes.map(hash => hash.salt);
-        const leaves = saltedHashes.map(hash => hash.hash);
+        const pigIds = [];
+        const salesHashes = [];
+        const ipfsCids = [];
+        const dbInsertions = [];
 
-        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-        const merkleroot = "0x" + tree.getRoot().toString("hex");
+        logger.info("Processing batch of Sales Data");
 
-        const ipfsData = { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price };
-        const ipfs_cid = await uploadToIPFS(ipfsData);
-        logger.info("Data added to IPFS");
+        for (const sales of salesData) {
+            const { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price } = sales;
+            
+            const saltedHashes = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price].map(hashWithSalt);
+            const salts = saltedHashes.map(hash => hash.salt);
+            const leaves = saltedHashes.map(hash => hash.hash);
 
-        
-        const receipt = await sendBlockchainTransaction(contract.methods.recordSale,[pigId, merkleroot, ipfs_cid]);
-        logger.info(`Transaction successful with hash: ${receipt.transactionHash}`);
+            const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+            const merkleroot = "0x" + tree.getRoot().toString("hex");
 
-        const insertQuery = `INSERT INTO sales (sale_id, pig_id, sale_date, final_weight, buyer_name, buyer_contact, price, ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
-        const insertValues = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price , ...salts];
-        await pool.query(insertQuery, insertValues);
+            const ipfsData = { saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price };
+            const ipfs_cid = await uploadToIPFS(ipfsData);
+            logger.info(`Data added to IPFS`);
 
-        res.send("Data added");
-        logger.info(`CID: ${ipfs_cid}, Merkle Root: ${merkleroot}`);
+            pigIds.push(pigId);
+            salesHashes.push(merkleroot);
+            ipfsCids.push(ipfs_cid);
+
+            const insertQuery = `INSERT INTO sales (sale_id, pig_id, sale_date, final_weight, buyer_name, buyer_contact, price, ssalt1, ssalt2, ssalt3, ssalt4, ssalt5, ssalt6, ssalt7) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ,$9, $10, $11, $12, $13, $14)`;
+            const insertValues = [saleId, pigId, saleDate, finalWeight, buyerName, buyerContact, price , ...salts];
+            
+            logger.info(`Inserting sales data into DB`);
+            dbInsertions.push(pool.query(insertQuery, insertValues));
+        }
+
+        const receipt = await sendBlockchainTransaction(contract.methods.recordSale, [pigIds, salesHashes, ipfsCids]);
+        logger.info(`Batch transaction successful with hash: ${receipt.transactionHash}`);
+
+        await Promise.all(dbInsertions);
+
+        res.send("Batch sales data added successfully");
+        logger.info(`Batch processed: ${salesData.length} Sales Record added`);
     } catch (error) {
         logger.error(`Error: ${error.message}`);
-        res.status(500).send("Error adding data");
+        res.status(500).send("Error adding batch sales data");
     }
 });
+
 
 
 app.post("/api/verify/pig", async function(req,res)
