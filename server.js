@@ -37,7 +37,6 @@ const pool = new Pool({
 });
 
 
-
 const web3 = new Web3('https://rpc-amoy.polygon.technology/');
 const contractABI =JSON.parse(process.env.CONTRACT_ABI);
   
@@ -156,7 +155,7 @@ app.post('/api/pigs', async function (req, res) {
         client.release(); 
     }
 });
-
+export { app, pool };
 
 app.post('/api/vaccination', async function (req, res) {
     try {
@@ -621,3 +620,5 @@ const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
 });
+
+export default app;
