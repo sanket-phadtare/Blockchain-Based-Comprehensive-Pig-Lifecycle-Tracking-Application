@@ -68,6 +68,16 @@ async function uploadToIPFS(data, retries = 3) {
     throw new Error("Failed to upload data to IPFS");
 }
 
+async function getMaticPriceInINR() {
+    try {
+        const response = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=inr');
+        return response.data['matic-network'].inr;
+    } catch (error) {
+        logger.error(`Error fetching MATIC price: ${error.message}`);
+        throw error;
+    }
+}
+
 async function sendBlockchainTransaction(method, params) {
     try {
         const txData = method(...params).encodeABI();
@@ -87,6 +97,18 @@ async function sendBlockchainTransaction(method, params) {
 
         const signedTx = await web3.eth.accounts.signTransaction(txObject, privateKey);
         const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+         //******************************Calculate gas cost in MATIC*********************//
+         const gasCostWei = BigInt(txObject.gas) * BigInt(txObject.gasPrice);
+         const gasCostMatic = web3.utils.fromWei(gasCostWei.toString(), 'ether');
+ 
+         //*****************************Get MATIC price in INR**************************//
+         const maticPriceInINR = await getMaticPriceInINR();
+ 
+         //***************************Calculate total cost in INR************************//
+         const totalCostINR = parseFloat(gasCostMatic) * maticPriceInINR;
+         console.log(`Total cost in INR: ₹${totalCostINR.toFixed(2)}`);
+
         return receipt;
     } catch (error) {
         logger.error(`Blockchain transaction failed: ${error.message}`);
