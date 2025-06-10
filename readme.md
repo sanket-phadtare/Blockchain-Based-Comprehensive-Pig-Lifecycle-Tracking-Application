@@ -143,7 +143,8 @@ CREATE TABLE sales (
 ---
 
 ## API Documentation
-#### 1. Register Pig Endpoint: ```POST /api/pigs```
+### 1. Register Pig 
+#### Endpoint: ```POST /api/pigs```
 #### Request Body:
 ```
 [
