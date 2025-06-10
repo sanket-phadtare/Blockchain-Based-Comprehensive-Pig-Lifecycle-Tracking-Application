@@ -290,14 +290,14 @@ Response:
 ## Code Explanation
 ### Key Components
 
-#### Merkle Tree Verification:
+#### 1. Merkle Tree Verification:
 
 Each data record is hashed with a unique salt.
 Hashes are used to create a Merkle Tree.
 The Merkle Root is stored on-chain.
 Verification recalculates the Merkle Root and compares with the blockchain.
 
-#### IPFS Storage:
+#### 2. IPFS Storage:
 
 Data is stored on IPFS via Pinata.
 Only the IPFS CID (Content Identifier) is stored on-chain.
@@ -308,20 +308,20 @@ Verification results are cached to improve performance.
 Positive verifications are cached longer (1 hour).
 Negative verifications are cached shorter (10 minutes).
 
-#### Blockchain Integration:
+#### 3. Blockchain Integration:
 
 Uses Polygon Mumbai Testnet for low-cost transactions.
 Supports batch operations for efficiency.
 Calculates gas costs in INR (via integration if needed).
 
-#### Error Handling:
+#### 4. Error Handling:
 
 Logging with Winston.
 Database transactions with rollback on error.
 Retry mechanisms for IPFS uploads.
 Full Code
 
-#### The complete code includes:
+#### 5. The complete code includes:
 
 Express server setup
 PostgreSQL connection pooling
@@ -332,7 +332,7 @@ Redis caching implementation
 Error handling and logging
 
 ---
-## IPFS Upload Issues:
+## 6. IPFS Upload Issues:
 
 - Verify your Pinata API keys.
 Check your network connection.
